@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestIA — Tu copiloto de inversión con IA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --green:#1D9E75;--green-l:#E1F5EE;--green-d:#0F6E56;--green-m:#5DCAA5;
+    --slate:#1a1f2e;--slate-m:#2d3348;--muted:#6b7280;--border:#e5e7eb;
+    --bg:#f4f6f9;--white:#fff;--amber:#EF9F27;--amber-l:#FAEEDA;
+    --danger:#E24B4A;--danger-l:#FCEBEB;--r:16px;--rs:10px;
+  }
+  body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .phone{width:390px;min-height:800px;background:var(--white);border-radius:40px;box-shadow:0 0 0 8px var(--slate),0 32px 64px rgba(0,0,0,0.22);overflow:hidden;display:flex;flex-direction:column;}
+  .notch{height:44px;background:var(--slate);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .notch-pill{width:120px;height:20px;background:#000;border-radius:20px;}
+  .screen{display:none;flex-direction:column;flex:1;overflow-y:auto;}
+  .screen.active{display:flex;}
+
+  /* LOGO / NAV */
+  .logo-bar{display:flex;align-items:center;gap:10px;}
+  .logo-icon{width:40px;height:40px;background:var(--green);border-radius:11px;display:flex;align-items:center;justify-content:center;}
+  .logo-icon svg{width:20px;height:20px;fill:white;}
+  .logo-name{font-family:'DM Serif Display',serif;font-size:24px;color:white;letter-spacing:-0.3px;}
+  .logo-tag{font-size:10px;color:var(--green-m);font-weight:500;letter-spacing:0.04em;margin-top:-3px;}
+
+  /* SHARED */
+  .s-header{padding:18px 20px 6px;display:flex;align-items:center;gap:10px;}
+  .back-btn{width:34px;height:34px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--slate);font-size:17px;flex-shrink:0;transition:background 0.15s;}
+  .back-btn:hover{background:var(--border);}
+  .s-title{font-size:17px;font-weight:500;color:var(--slate);}
+  .progress-bar{height:3px;background:var(--border);margin:0 24px 18px;border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.4s ease;}
+  .s-body{padding:0 24px 20px;display:flex;flex-direction:column;gap:16px;flex:1;}
+  .s-eyebrow{font-size:11px;font-weight:500;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;}
+  .s-question{font-family:'DM Serif Display',serif;font-size:22px;color:var(--slate);line-height:1.3;letter-spacing:-0.3px;margin-top:-4px;}
+  .s-footer{padding:0 24px 28px;margin-top:auto;display:flex;flex-direction:column;gap:8px;}
+
+  /* BUTTONS */
+  .btn-primary{width:100%;padding:15px;background:var(--green);color:white;font-family:'Inter',sans-serif;font-size:15px;font-weight:500;border:none;border-radius:var(--rs);cursor:pointer;transition:background 0.15s;}
+  .btn-primary:hover{background:var(--green-d);}
+  .btn-ghost{width:100%;padding:12px;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green-d);}
+
+  /* FIELDS */
+  .field-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px;display:block;}
+  .field-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--rs);overflow:hidden;transition:border-color 0.15s;background:white;}
+  .field-wrap:focus-within{border-color:var(--green);}
+  .field-prefix{padding:0 12px;font-size:13px;color:var(--muted);background:var(--bg);height:48px;display:flex;align-items:center;border-right:1px solid var(--border);font-weight:500;}
+  .field-wrap input{flex:1;border:none;outline:none;padding:0 14px;font-size:15px;font-family:'Inter',sans-serif;color:var(--slate);height:48px;background:transparent;}
+  .field-wrap input::placeholder{color:#d1d5db;}
+  .input-full{width:100%;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--slate);outline:none;transition:border-color 0.15s;}
+  .input-full:focus{border-color:var(--green);}
+  .info-box{background:var(--green-l);border-radius:var(--rs);padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
+  .info-box svg{width:16px;height:16px;fill:var(--green-d);flex-shrink:0;margin-top:1px;}
+  .info-box span{font-size:12px;color:var(--green-d);line-height:1.5;}
+  .expense-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .expense-item{display:flex;flex-direction:column;gap:4px;}
+
+  /* WELCOME HERO */
+  .s0-hero{background:var(--slate);padding:36px 28px 32px;display:flex;flex-direction:column;gap:16px;}
+  .s0-tagline{font-family:'DM Serif Display',serif;font-size:32px;color:white;line-height:1.15;letter-spacing:-0.5px;}
+  .s0-tagline span{color:var(--green-m);}
+  .s0-sub{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;}
+  .s0-body{padding:22px 24px 26px;display:flex;flex-direction:column;gap:16px;flex:1;}
+  .step-row{display:flex;align-items:flex-start;gap:12px;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:var(--green-l);color:var(--green-d);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .step-info strong{display:block;font-size:13px;font-weight:500;color:var(--slate);margin-bottom:1px;}
+  .step-info span{font-size:12px;color:var(--muted);line-height:1.4;}
+
+  /* GUIDE BANNER */
+  .guide-banner{background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+  .guide-banner-icon{font-size:22px;flex-shrink:0;}
+  .guide-banner-text strong{display:block;font-size:13px;font-weight:500;color:white;}
+  .guide-banner-text span{font-size:11px;color:rgba(255,255,255,0.75);line-height:1.4;}
+
+  /* PERFIL RIESGO */
+  .risk-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all 0.15s;}
+  .risk-card:hover{border-color:var(--green);background:var(--green-l);}
+  .risk-card.selected{border-color:var(--green);background:var(--green-l);}
+  .risk-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .risk-info strong{display:block;font-size:13px;font-weight:500;color:var(--slate);}
+  .risk-info span{font-size:12px;color:var(--muted);line-height:1.4;}
+  .exp-options{display:flex;gap:8px;flex-wrap:wrap;}
+  .exp-pill{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;background:var(--white);transition:all 0.15s;font-family:'Inter',sans-serif;}
+  .exp-pill:hover{border-color:var(--green);color:var(--green-d);}
+  .exp-pill.selected{border-color:var(--green);background:var(--green-l);color:var(--green-d);}
+
+  /* DIAGNÓSTICO */
+  .diagnosis-hero{background:var(--slate);padding:22px 22px 26px;}
+  .diag-perfil-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--green-m);font-weight:500;margin-bottom:10px;}
+  .diag-label{font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+  .diag-amount{font-family:'DM Serif Display',serif;font-size:50px;color:var(--green-m);letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+  .diag-sub{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;}
+  .gauge-wrap{margin-top:14px;background:rgba(255,255,255,0.08);border-radius:8px;height:8px;overflow:hidden;}
+  .gauge-fill{height:100%;background:var(--green-m);border-radius:8px;transition:width 1s ease;}
+  .gauge-labels{display:flex;justify-content:space-between;margin-top:5px;}
+  .gauge-labels span{font-size:10px;color:rgba(255,255,255,0.35);}
+  .breakdown-card{margin:0 18px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:-12px;}
+  .breakdown-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);}
+  .breakdown-row:last-child{border-bottom:none;}
+  .breakdown-left{display:flex;align-items:center;gap:9px;}
+  .breakdown-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .breakdown-label{font-size:12px;color:var(--slate);}
+  .breakdown-value{font-size:13px;font-weight:500;color:var(--slate);}
+  .verdict-box{margin:12px 18px 0;background:var(--green-l);border-radius:var(--rs);padding:12px 14px;display:flex;gap:10px;align-items:center;}
+  .verdict-icon{width:34px;height:34px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .verdict-icon svg{width:16px;height:16px;fill:white;}
+  .verdict-text strong{display:block;font-size:13px;font-weight:500;color:var(--green-d);}
+  .verdict-text span{font-size:12px;color:var(--green-d);opacity:0.75;}
+  .opp-box{margin:10px 18px 0;background:var(--slate);border-radius:var(--rs);padding:12px 14px;}
+  .opp-label{font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:6px;}
+  .opp-row{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .opp-text{font-size:12px;color:rgba(255,255,255,0.65);line-height:1.5;}
+  .opp-amount{font-family:'DM Serif Display',serif;font-size:22px;color:var(--danger);text-align:right;white-space:nowrap;}
+  .opp-sub{font-size:10px;color:rgba(255,255,255,0.35);text-align:right;}
+
+  /* SIMULACIÓN */
+  .chart-area{background:var(--slate);border-radius:var(--r);padding:14px;position:relative;height:180px;overflow:hidden;margin:0 18px;}
+  .chart-svg{width:100%;height:100%;overflow:visible;}
+  .chart-legend{display:flex;gap:14px;padding:6px 18px 0;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+  .legend-line{width:16px;height:2px;border-radius:1px;}
+  .sim-sliders{padding:0 24px;display:flex;flex-direction:column;gap:12px;}
+  .slider-row{display:flex;flex-direction:column;gap:5px;}
+  .slider-top{display:flex;justify-content:space-between;}
+  .slider-label{font-size:12px;font-weight:500;color:var(--muted);}
+  .slider-val{font-size:12px;font-weight:500;color:var(--slate);}
+  input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);cursor:pointer;}
+  .total-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 18px;}
+  .total-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rs);padding:12px;}
+  .total-card.hi{background:var(--green-l);border-color:var(--green);}
+  .tc-label{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+  .total-card.hi .tc-label{color:var(--green-d);}
+  .tc-val{font-family:'DM Serif Display',serif;font-size:20px;color:var(--slate);letter-spacing:-0.3px;}
+  .total-card.hi .tc-val{color:var(--green-d);}
+  .tc-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+  .total-card.hi .tc-sub{color:var(--green);}
+  .gan-tag{display:inline-flex;align-items:center;background:var(--green);color:white;font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;margin-top:3px;}
+
+  /* PANTALLA FINAL */
+  .final-hero{background:var(--slate);padding:26px 22px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;}
+  .check-circle{width:56px;height:56px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;}
+  .check-circle svg{width:28px;height:28px;fill:white;}
+  .final-title{font-family:'DM Serif Display',serif;font-size:24px;color:white;line-height:1.2;}
+  .final-sub{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;max-width:280px;}
+  .final-stats{display:flex;gap:14px;}
+  .fstat{text-align:center;}
+  .fstat-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--green-m);}
+  .fstat-label{font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px;}
+  .fdiv{width:1px;background:rgba(255,255,255,0.1);}
+
+  /* CTA CARDS */
+  .cta-section{padding:18px 18px 0;display:flex;flex-direction:column;gap:10px;}
+  .cta-sec-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;}
+  .cta-card{border-radius:var(--rs);cursor:pointer;transition:all 0.15s;overflow:hidden;border:1.5px solid var(--border);background:var(--white);}
+  .cta-card:hover{border-color:var(--green);box-shadow:0 0 0 3px var(--green-l);}
+  .cta-card.green-cta{background:var(--green);border-color:var(--green);}
+  .cta-card.dark-cta{background:var(--slate);border-color:var(--slate);}
+  .cta-top{display:flex;align-items:center;gap:12px;padding:14px 14px 10px;}
+  .cta-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .cta-icon.g{background:var(--green-l);}
+  .cta-icon.w{background:rgba(255,255,255,0.15);}
+  .cta-icon.a{background:var(--amber-l);}
+  .cta-main{flex:1;}
+  .cta-main strong{display:block;font-size:13px;font-weight:500;color:var(--slate);}
+  .cta-card.green-cta .cta-main strong,.cta-card.dark-cta .cta-main strong{color:white;}
+  .cta-main span{font-size:11px;color:var(--muted);}
+  .cta-card.green-cta .cta-main span,.cta-card.dark-cta .cta-main span{color:rgba(255,255,255,0.6);}
+  .cta-arrow{color:var(--muted);font-size:18px;flex-shrink:0;}
+  .cta-card.green-cta .cta-arrow,.cta-card.dark-cta .cta-arrow{color:rgba(255,255,255,0.6);}
+  .cta-detail{border-top:1px solid rgba(0,0,0,0.07);padding:10px 14px 12px;display:flex;flex-wrap:wrap;gap:6px;}
+  .cta-card.green-cta .cta-detail,.cta-card.dark-cta .cta-detail{border-top:1px solid rgba(255,255,255,0.1);}
+  .cta-pill{font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bg);color:var(--muted);font-weight:500;}
+  .cta-card.green-cta .cta-pill{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);}
+  .cta-card.dark-cta .cta-pill{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);}
+  .price-badge{background:var(--amber);color:white;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;margin-left:auto;margin-right:6px;}
+
+  /* PANEL ADMIN */
+  .admin-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+  .admin-row:last-child{border-bottom:none;}
+  .admin-label{color:var(--muted);font-size:11px;}
+  .admin-val{font-weight:500;color:var(--slate);}
+  .admin-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;margin:0 18px;}
+  .admin-header{background:var(--slate);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+  .admin-header span{font-size:12px;font-weight:500;color:white;}
+  .admin-header small{font-size:10px;color:rgba(255,255,255,0.4);}
+  .user-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-l);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--green-d);font-weight:500;}
+
+  .pad-bottom{height:28px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="notch"><div class="notch-pill"></div></div>
+
+<!-- ══ S0: BIENVENIDA ══ -->
+<div class="screen active" id="s0">
+  <div class="s0-hero">
+    <div class="logo-bar">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      <div><div class="logo-name">InvestIA</div><div class="logo-tag">Copiloto de inversión con IA</div></div>
+    </div>
+    <div class="s0-tagline">Descubre<br>cuánto puedes<br><span>invertir hoy.</span></div>
+    <div class="s0-sub">Un proceso guiado paso a paso. Sin arriesgar tu liquidez. Sin complicarte.</div>
+  </div>
+  <div class="s0-body">
+    <div class="guide-banner">
+      <div class="guide-banner-icon">🤖</div>
+      <div class="guide-banner-text">
+        <strong>Acompañamiento IA en cada paso</strong>
+        <span>InvestIA te guía desde tu diagnóstico hasta tu primera inversión con recomendaciones personalizadas.</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="step-row"><div class="step-num">1</div><div class="step-info"><strong>Regístrate</strong><span>Solo tu nombre y email — en 30 segundos.</span></div></div>
+      <div class="step-row"><div class="step-num">2</div><div class="step-info"><strong>Diagnóstico de liquidez</strong><span>Cuánto puedes invertir sin quedarte sin plata.</span></div></div>
+      <div class="step-row"><div class="step-num">3</div><div class="step-info"><strong>Tu perfil de riesgo</strong><span>Personalizamos la recomendación según tú.</span></div></div>
+      <div class="step-row"><div class="step-num">4</div><div class="step-info"><strong>Simula y actúa</strong><span>Ve cuánto tendrías y elige cómo empezar.</span></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;">
+      <button class="btn-primary" onclick="goTo('reg')">Comenzar proceso guiado →</button>
+      <button class="btn-ghost" onclick="goTo(3)">Omitir diagnóstico</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SREG: REGISTRO ══ -->
+<div class="screen" id="sreg">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(0)">←</button>
+    <span class="s-title">Crear cuenta</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:8%"></div></div>
+  <div class="s-body">
+    <div>
+      <div class="s-eyebrow">Paso 0 de 4</div>
+      <div class="s-question">¿Cómo te llamamos?</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label class="field-label">Nombre</label>
+        <input class="input-full" type="text" id="reg-nombre" placeholder="Ej: Javiera">
+      </div>
+      <div>
+        <label class="field-label">Email</label>
+        <input class="input-full" type="email" id="reg-email" placeholder="tuemail@gmail.com">
+      </div>
+      <div>
+        <label class="field-label">Edad</label>
+        <input class="input-full" type="number" id="reg-edad" placeholder="23" min="18" max="35">
+      </div>
+    </div>
+    <div class="info-box">
+      <svg viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z"/></svg>
+      <span>Tus datos son solo para personalizar tu experiencia. InvestIA no comparte ni vende información.</span>
+    </div>
+  </div>
+  <div class="s-footer">
+    <button class="btn-primary" onclick="registrar()">Continuar →</button>
+    <button class="btn-ghost" onclick="goTo(0)">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S1: INGRESOS ══ -->
+<div class="screen" id="s1">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo('reg')">←</button>
+    <span class="s-title">Tus ingresos</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+  <div class="s-body">
+    <div>
+      <div class="s-eyebrow">Paso 1 de 4</div>
+      <div class="s-question">¿Cuánto dinero entra mensualmente?</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label class="field-label">Sueldo o ingreso fijo</label>
+        <div class="field-wrap"><span class="field-prefix">$</span><input type="number" id="ingreso_fijo" placeholder="600.000" value="600000"></div>
+      </div>
+      <div>
+        <label class="field-label">Ingresos variables (mesada, part-time, etc.)</label>
+        <div class="field-wrap"><span class="field-prefix">$</span><input type="number" id="ingreso_var" placeholder="0" value="0"></div>
+      </div>
+    </div>
+    <div class="info-box">
+      <svg viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z"/></svg>
+      <span>No necesitamos acceso a tu banco. Solo estimaciones para calcular tu diagnóstico personalizado.</span>
+    </div>
+  </div>
+  <div class="s-footer">
+    <button class="btn-primary" onclick="goTo(2)">Continuar →</button>
+    <button class="btn-ghost" onclick="goTo('reg')">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S2: GASTOS ══ -->
+<div class="screen" id="s2">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(1)">←</button>
+    <span class="s-title">Tus gastos</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+  <div class="s-body">
+    <div>
+      <div class="s-eyebrow">Paso 2 de 4</div>
+      <div class="s-question">¿En qué gastas cada mes?</div>
+    </div>
+    <div class="expense-grid">
+      <div class="expense-item"><label class="field-label">Arriendo / vivienda</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_arriendo" value="200000" style="font-size:13px;"></div></div>
+      <div class="expense-item"><label class="field-label">Alimentación</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_comida" value="120000" style="font-size:13px;"></div></div>
+      <div class="expense-item"><label class="field-label">Transporte</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_transporte" value="40000" style="font-size:13px;"></div></div>
+      <div class="expense-item"><label class="field-label">Salud / seguros</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_salud" value="30000" style="font-size:13px;"></div></div>
+      <div class="expense-item"><label class="field-label">Entretenimiento</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_entret" value="50000" style="font-size:13px;"></div></div>
+      <div class="expense-item"><label class="field-label">Otros</label><div class="field-wrap"><span class="field-prefix" style="padding:0 8px;font-size:12px;">$</span><input type="number" id="g_otros" value="30000" style="font-size:13px;"></div></div>
+    </div>
+    <div class="info-box">
+      <svg viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z"/></svg>
+      <span>Reservamos un colchón de seguridad del 15% de tus ingresos para emergencias.</span>
+    </div>
+  </div>
+  <div class="s-footer">
+    <button class="btn-primary" onclick="goTo('2b')">Continuar →</button>
+    <button class="btn-ghost" onclick="goTo(1)">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S2b: PERFIL ══ -->
+<div class="screen" id="s2b">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(2)">←</button>
+    <span class="s-title">Tu perfil</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
+  <div class="s-body">
+    <div>
+      <div class="s-eyebrow">Paso 3 de 4</div>
+      <div class="s-question">¿Cómo te defines frente al riesgo?</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="risk-card" id="risk-conservador" onclick="selectRisk('conservador')">
+        <div class="risk-icon">🛡️</div>
+        <div class="risk-info"><strong>Conservador</strong><span>Prefiero rendimientos estables. La seguridad primero.</span></div>
+      </div>
+      <div class="risk-card selected" id="risk-moderado" onclick="selectRisk('moderado')">
+        <div class="risk-icon">⚖️</div>
+        <div class="risk-info"><strong>Moderado</strong><span>Acepto variabilidad para mejores retornos a largo plazo.</span></div>
+      </div>
+      <div class="risk-card" id="risk-agresivo" onclick="selectRisk('agresivo')">
+        <div class="risk-icon">🚀</div>
+        <div class="risk-info"><strong>Agresivo</strong><span>Quiero maximizar el retorno aunque implique más volatilidad.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="field-label" style="margin-bottom:10px;">¿Has invertido antes?</div>
+      <div class="exp-options">
+        <button class="exp-pill selected" id="exp-nunca" onclick="selectExp('nunca')">Nunca</button>
+        <button class="exp-pill" id="exp-poco" onclick="selectExp('poco')">Algo (APV, DAP)</button>
+        <button class="exp-pill" id="exp-regular" onclick="selectExp('regular')">Con regularidad</button>
+      </div>
+    </div>
+  </div>
+  <div class="s-footer">
+    <button class="btn-primary" onclick="calcularDiagnostico()">Ver mi diagnóstico →</button>
+    <button class="btn-ghost" onclick="goTo(2)">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S3: DIAGNÓSTICO ══ -->
+<div class="screen" id="s3">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo('2b')">←</button>
+    <span class="s-title">Tu diagnóstico</span>
+  </div>
+  <div class="diagnosis-hero">
+    <div class="diag-perfil-badge" id="perfil-badge">⚖️ Perfil moderado</div>
+    <div class="diag-label">Puedes invertir mensualmente</div>
+    <div class="diag-amount" id="diag-amount">$40.000</div>
+    <div class="diag-sub" id="diag-sub">sin comprometer tu liquidez mensual</div>
+    <div class="gauge-wrap"><div class="gauge-fill" id="gauge-fill" style="width:7%"></div></div>
+    <div class="gauge-labels"><span>0%</span><span id="gauge-pct">7% del ingreso</span><span>100%</span></div>
+  </div>
+  <div class="breakdown-card">
+    <div class="breakdown-row"><div class="breakdown-left"><div class="breakdown-dot" style="background:#1D9E75"></div><div class="breakdown-label">Ingresos totales</div></div><div class="breakdown-value" id="bd-ingresos">$600.000</div></div>
+    <div class="breakdown-row"><div class="breakdown-left"><div class="breakdown-dot" style="background:#E24B4A"></div><div class="breakdown-label">Gastos fijos</div></div><div class="breakdown-value" id="bd-gastos">$470.000</div></div>
+    <div class="breakdown-row"><div class="breakdown-left"><div class="breakdown-dot" style="background:#EF9F27"></div><div class="breakdown-label">Colchón de seguridad (15%)</div></div><div class="breakdown-value" id="bd-colchon">$90.000</div></div>
+    <div class="breakdown-row" style="background:#f9fafb;"><div class="breakdown-left"><div class="breakdown-dot" style="background:#1D9E75"></div><div class="breakdown-label" style="font-weight:500;">Disponible para invertir</div></div><div class="breakdown-value" id="bd-disponible" style="color:#1D9E75;">$40.000</div></div>
+  </div>
+  <div class="verdict-box">
+    <div class="verdict-icon"><svg viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-7l7.07-7.071-1.414-1.414L11 12.172l-2.828-2.829-1.414 1.414L11 15z"/></svg></div>
+    <div class="verdict-text"><strong id="verdict-title">Tu punto de partida</strong><span id="verdict-desc">Calculando...</span></div>
+  </div>
+  <div class="opp-box">
+    <div class="opp-label">💡 Costo de esperar 1 año para empezar</div>
+    <div class="opp-row">
+      <div class="opp-text">Si empiezas hoy vs. en 12 meses, dejarías de ganar:</div>
+      <div><div class="opp-amount" id="opp-amount">-$0</div><div class="opp-sub">en rendimientos perdidos</div></div>
+    </div>
+  </div>
+  <div class="s-footer" style="margin-top:14px;">
+    <button class="btn-primary" onclick="goTo(4)">Simular cómo crece →</button>
+    <button class="btn-ghost" onclick="calcularDiagnostico()">↺ Actualizar diagnóstico</button>
+    <button class="btn-ghost" onclick="goTo('2b')">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S4: SIMULACIÓN ══ -->
+<div class="screen" id="s4">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(3)">←</button>
+    <span class="s-title">Simulación</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:82%"></div></div>
+  <div class="s-body" style="gap:12px;">
+    <div>
+      <div class="s-eyebrow">Paso 4 de 4</div>
+      <div class="s-question">Así crece tu dinero</div>
+    </div>
+    <div class="chart-area">
+      <svg class="chart-svg" id="chart-svg" viewBox="0 0 350 148" preserveAspectRatio="none"></svg>
+      <div style="position:absolute;top:10px;right:12px;text-align:right;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:1px;">en <span id="chart-years-label">5</span> años</div>
+        <div style="font-family:'DM Serif Display';font-size:22px;color:#5DCAA5;" id="chart-total">$0</div>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-line" style="background:#5DCAA5;"></div>Con InvestIA</div>
+      <div class="legend-item"><div class="legend-line" style="background:rgba(100,100,100,0.4);"></div>Sin invertir</div>
+    </div>
+    <div class="total-cards">
+      <div class="total-card"><div class="tc-label">Aportado total</div><div class="tc-val" id="sim-aportado">$0</div><div class="tc-sub">tu dinero puesto</div></div>
+      <div class="total-card hi"><div class="tc-label">Total acumulado</div><div class="tc-val" id="sim-total">$0</div><div class="tc-sub">con rentabilidad</div><div class="gan-tag" id="sim-ganancia">+0%</div></div>
+    </div>
+    <div class="sim-sliders">
+      <div class="slider-row"><div class="slider-top"><span class="slider-label">Monto mensual</span><span class="slider-val" id="lbl-monto">$50.000/mes</span></div><input type="range" id="sl-monto" min="10000" max="500000" step="5000" value="50000" oninput="updateSim()"></div>
+      <div class="slider-row"><div class="slider-top"><span class="slider-label">Años de inversión</span><span class="slider-val" id="lbl-anos">5 años</span></div><input type="range" id="sl-anos" min="1" max="30" step="1" value="5" oninput="updateSim()"></div>
+      <div class="slider-row"><div class="slider-top"><span class="slider-label">Rentabilidad anual</span><span class="slider-val" id="lbl-rent">7%</span></div><input type="range" id="sl-rent" min="2" max="15" step="0.5" value="7" oninput="updateSim()"></div>
+    </div>
+  </div>
+  <div class="s-footer">
+    <button class="btn-primary" onclick="irAOpciones()">Ver mis opciones →</button>
+    <button class="btn-ghost" onclick="goTo(3)">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ S5: OPCIONES FINALES ══ -->
+<div class="screen" id="s5">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(4)">←</button>
+    <span class="s-title">Mis opciones</span>
+  </div>
+  <div class="final-hero">
+    <div class="check-circle"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+    <div class="final-title">¡Diagnóstico listo, <span id="final-nombre">amigo</span>!</div>
+    <div class="final-sub" id="final-sub">Tienes un buen punto de partida. Elige cómo quieres seguir con InvestIA.</div>
+    <div class="final-stats">
+      <div class="fstat"><div class="fstat-val" id="final-monto">$0/mes</div><div class="fstat-label">para invertir</div></div>
+      <div class="fdiv"></div>
+      <div class="fstat"><div class="fstat-val" id="final-proyeccion">$0</div><div class="fstat-label">en 5 años</div></div>
+      <div class="fdiv"></div>
+      <div class="fstat"><div class="fstat-val" id="final-perfil-badge">⚖️</div><div class="fstat-label">tu perfil</div></div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <div class="cta-sec-label">¿Qué quieres hacer?</div>
+
+    <div class="cta-card green-cta" onclick="trackCTA('invertir_ahora')">
+      <div class="cta-top">
+        <div class="cta-icon w">🚀</div>
+        <div class="cta-main"><strong>Quiero invertir ahora</strong><span>Te llevamos directo a tu primera inversión</span></div>
+        <span class="cta-arrow">›</span>
+      </div>
+      <div class="cta-detail">
+        <span class="cta-pill">✓ Recomendación personalizada</span>
+        <span class="cta-pill">✓ Sin cuenta de broker previa</span>
+        <span class="cta-pill">✓ Desde tu monto diagnóstico</span>
+      </div>
+    </div>
+
+    <div class="cta-card dark-cta" onclick="trackCTA('acompanamiento_ia')">
+      <div class="cta-top">
+        <div class="cta-icon w">🤖</div>
+        <div class="cta-main"><strong>Quiero acompañamiento IA</strong><span>Seguimiento semanal y alertas personalizadas</span></div>
+        <span class="price-badge">$3.990/mes</span>
+        <span class="cta-arrow">›</span>
+      </div>
+      <div class="cta-detail">
+        <span class="cta-pill">✓ Alertas de mercado</span>
+        <span class="cta-pill">✓ Copiloto IA 24/7</span>
+        <span class="cta-pill">✓ Rebalanceo automático</span>
+        <span class="cta-pill">✓ Reportes mensuales</span>
+      </div>
+    </div>
+
+    <div class="cta-card" onclick="trackCTA('llegar_e_invertir')">
+      <div class="cta-top">
+        <div class="cta-icon g">📈</div>
+        <div class="cta-main"><strong>Llegar e invertir</strong><span>Sin tutoriales — depositar y empezar ya</span></div>
+        <span class="cta-arrow">›</span>
+      </div>
+      <div class="cta-detail">
+        <span class="cta-pill">✓ Acceso directo</span>
+        <span class="cta-pill">✓ ETF o fondo sugerido</span>
+        <span class="cta-pill">✓ Flujo ultra simple</span>
+      </div>
+    </div>
+
+    <div class="cta-card" onclick="trackCTA('aprender')">
+      <div class="cta-top">
+        <div class="cta-icon a">🎓</div>
+        <div class="cta-main"><strong>Aprender antes de decidir</strong><span>Guía de 5 min personalizada para tu perfil</span></div>
+        <span class="cta-arrow">›</span>
+      </div>
+      <div class="cta-detail">
+        <span class="cta-pill">✓ Conceptos básicos</span>
+        <span class="cta-pill">✓ Para tu nivel de experiencia</span>
+        <span class="cta-pill">✓ Sin jerga financiera</span>
+      </div>
+    </div>
+  </div>
+  <div class="pad-bottom"></div>
+</div>
+
+<!-- ══ SADMIN: PANEL EQUIPO ══ -->
+<div class="screen" id="sadmin">
+  <div class="s-header">
+    <button class="back-btn" onclick="goTo(0)">←</button>
+    <span class="s-title">📊 Panel InvestIA</span>
+  </div>
+  <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="admin-stats"></div>
+    <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Registros de usuarios</div>
+    <div id="admin-users" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <button class="btn-ghost" onclick="limpiarDatos()" style="margin-top:8px;">🗑 Limpiar todos los datos</button>
+  </div>
+</div>
+
+</div><!-- /phone -->
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let selectedRisk='moderado', selectedExp='nunca', diagDisponible=40000;
+let currentUser={nombre:'',email:'',edad:''};
+let sessions=[];
+
+// ─── GOOGLE SHEETS INTEGRATION ───────────────────────────
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbw6FSBUAS9NTPISj9x4GQgZ3DsQ1uYKX4rNQdHdhjALdNwatouwdUVM96GhL6r7wC_u/exec';
+
+function sendToSheets(data){
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(()=>{});
+}
+
+// ─── STORAGE ─────────────────────────────────────────────
+function saveSession(data){
+  try{
+    const all=JSON.parse(localStorage.getItem('investia_sessions')||'[]');
+    const idx=all.findIndex(s=>s.email===data.email);
+    if(idx>=0)all[idx]=data; else all.push(data);
+    localStorage.setItem('investia_sessions',JSON.stringify(all));
+    sessions=all;
+  }catch(e){sessions.push(data);}
+}
+function loadSessions(){
+  try{sessions=JSON.parse(localStorage.getItem('investia_sessions')||'[]');}
+  catch(e){sessions=[];}
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function goTo(n){
+  try{
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el=document.getElementById('s'+n);
+    if(!el){console.error('Screen not found: s'+n);return;}
+    el.classList.add('active');
+    el.scrollTop=0;
+    if(n===4)initSim();
+    if(n==='sadmin')renderAdmin();
+    try{trackStep(n);}catch(e){}
+  }catch(e){console.error('goTo error:',e);}
+}
+
+// ─── TRACKING ────────────────────────────────────────────
+function trackStep(step){
+  try{
+  if(!currentUser.email&&step!=='reg'&&step!==0&&step!=='sadmin')return;
+  const sess=getOrCreateSession();
+  if(!sess.steps)sess.steps=[];
+  const stepName={0:'bienvenida','reg':'registro',1:'ingresos',2:'gastos','2b':'perfil',3:'diagnostico',4:'simulacion',5:'opciones','sadmin':'admin'};
+  if(!sess.steps.includes(stepName[step]||step))sess.steps.push(stepName[step]||step);
+  sess.lastStep=stepName[step]||step;
+  sess.lastSeen=new Date().toLocaleString('es-CL');
+  saveSession(sess);
+  }catch(e){}
+}
+function trackCTA(cta){
+  const sess=getOrCreateSession();
+  sess.ctaElegido=cta;
+  sess.lastSeen=new Date().toLocaleString('es-CL');
+  saveSession(sess);
+  // Visual feedback
+  sendToSheets({evento:'cta_click',nombre:currentUser.nombre,email:currentUser.email,cta:cta,pasos:(sess.steps||[]),montoSim:sess.simulacion?.monto,anosSim:sess.simulacion?.anos,totalSim:sess.simulacion?.total,timestamp:new Date().toISOString()});
+  alert('✅ ¡Selección registrada! En la versión final esto te llevaría al flujo de "'+cta.replace(/_/g,' ')+'".');
+}
+
+function getOrCreateSession(){
+  let sess=sessions.find(s=>s.email===currentUser.email);
+  if(!sess){
+    sess={...currentUser,steps:[],ctaElegido:null,diagnostico:null,lastSeen:new Date().toLocaleString('es-CL'),registradoEn:new Date().toLocaleString('es-CL')};
+    sessions.push(sess);
+  }
+  return sess;
+}
+
+// ─── REGISTRO ────────────────────────────────────────────
+function registrar(){
+  const nombre=document.getElementById('reg-nombre').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const edad=document.getElementById('reg-edad').value.trim();
+  if(!nombre||!email){alert('Por favor completa tu nombre y email para continuar.');return;}
+  currentUser={nombre,email,edad};
+  const sess=getOrCreateSession();
+  sess.registradoEn=new Date().toLocaleString('es-CL');
+  saveSession(sess);
+  sendToSheets({evento:"registro",nombre,email,edad,timestamp:new Date().toISOString()});
+  document.getElementById('final-nombre').textContent=nombre.split(' ')[0];
+  goTo(1);
+}
+
+// ─── RISK / EXP ──────────────────────────────────────────
+function selectRisk(v){
+  selectedRisk=v;
+  ['conservador','moderado','agresivo'].forEach(r=>document.getElementById('risk-'+r).classList.toggle('selected',r===v));
+}
+function selectExp(v){
+  selectedExp=v;
+  ['nunca','poco','regular'].forEach(e=>document.getElementById('exp-'+e).classList.toggle('selected',e===v));
+}
+
+// ─── FMT ─────────────────────────────────────────────────
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
+
+// ─── DIAGNÓSTICO ─────────────────────────────────────────
+function calcularDiagnostico(){
+  const fi=parseFloat(document.getElementById('ingreso_fijo').value)||0;
+  const fv=parseFloat(document.getElementById('ingreso_var').value)||0;
+  const ti=fi+fv;
+  const gastos=['g_arriendo','g_comida','g_transporte','g_salud','g_entret','g_otros']
+    .reduce((s,id)=>s+(parseFloat(document.getElementById(id).value)||0),0);
+  const colchon=ti*0.15;
+  const disp=Math.max(0,ti-gastos-colchon);
+  diagDisponible=disp;
+  const pct=ti>0?Math.min(100,(disp/ti)*100):0;
+
+  document.getElementById('diag-amount').textContent=fmt(disp);
+  document.getElementById('bd-ingresos').textContent=fmt(ti);
+  document.getElementById('bd-gastos').textContent=fmt(gastos);
+  document.getElementById('bd-colchon').textContent=fmt(colchon);
+  document.getElementById('bd-disponible').textContent=fmt(disp);
+  document.getElementById('gauge-fill').style.width=pct.toFixed(0)+'%';
+  document.getElementById('gauge-pct').textContent=pct.toFixed(0)+'% del ingreso';
+
+  const pb={conservador:'🛡️ Perfil conservador',moderado:'⚖️ Perfil moderado',agresivo:'🚀 Perfil agresivo'};
+  document.getElementById('perfil-badge').textContent=pb[selectedRisk];
+  document.getElementById('final-perfil-badge').textContent={conservador:'🛡️',moderado:'⚖️',agresivo:'🚀'}[selectedRisk];
+
+  const instr={conservador:'instrumentos de bajo riesgo (DAP, APV conservador)',moderado:'fondos balanceados y ETFs',agresivo:'renta variable y ETFs de alto potencial'};
+  if(disp<=0){
+    document.getElementById('verdict-title').textContent='Tus gastos superan tu ingreso';
+    document.getElementById('verdict-desc').textContent='Ajusta tus gastos para liberar margen de inversión.';
+  } else if(pct<10){
+    document.getElementById('verdict-title').textContent='Margen ajustado, pero existe';
+    document.getElementById('verdict-desc').textContent=fmt(disp)+'/mes recomendados en '+instr[selectedRisk]+'.';
+  } else {
+    document.getElementById('verdict-title').textContent='Tienes un buen punto de partida';
+    document.getElementById('verdict-desc').textContent=fmt(disp)+'/mes disponibles en '+instr[selectedRisk]+'.';
+  }
+
+  const rent={conservador:0.045,moderado:0.07,agresivo:0.10}[selectedRisk];
+  const r=rent/12,n=12;
+  const perdido=(r>0?disp*((Math.pow(1+r,n)-1)/r):disp*n)-disp*12;
+  document.getElementById('opp-amount').textContent='-'+fmt(Math.max(0,perdido));
+
+  document.getElementById('sl-monto').value=Math.min(Math.max(disp,10000),500000);
+  document.getElementById('sl-rent').value={conservador:4.5,moderado:7,agresivo:10}[selectedRisk];
+  document.getElementById('final-monto').textContent=fmt(disp)+'/mes';
+
+  // Save to session
+  const sess=getOrCreateSession();
+  sess.diagnostico={ingresos:ti,gastos,colchon,disponible:disp,perfil:selectedRisk,experiencia:selectedExp};
+  saveSession(sess);
+  sendToSheets({evento:"diagnostico",nombre:currentUser.nombre,email:currentUser.email,edad:currentUser.edad,ingresos:ti,gastos,disponible:disp,perfil:selectedRisk,experiencia:selectedExp,diagnostico:true,pasos:(getOrCreateSession().steps||[]),timestamp:new Date().toISOString()});
+
+  goTo(3);
+}
+
+// ─── SIMULACIÓN ──────────────────────────────────────────
+function initSim(){updateSim();}
+function updateSim(){
+  const monto=parseFloat(document.getElementById('sl-monto').value);
+  const anos=parseInt(document.getElementById('sl-anos').value);
+  const rent=parseFloat(document.getElementById('sl-rent').value)/100;
+  document.getElementById('lbl-monto').textContent=fmt(monto)+'/mes';
+  document.getElementById('lbl-anos').textContent=anos+(anos===1?' año':' años');
+  document.getElementById('lbl-rent').textContent=document.getElementById('sl-rent').value+'%';
+  document.getElementById('chart-years-label').textContent=anos;
+  const r=rent/12,n=anos*12;
+  const total=r>0?monto*((Math.pow(1+r,n)-1)/r):monto*n;
+  const aportado=monto*n;
+  const ganPct=Math.round((total/aportado-1)*100);
+  document.getElementById('sim-total').textContent=fmt(total);
+  document.getElementById('sim-aportado').textContent=fmt(aportado);
+  document.getElementById('sim-ganancia').textContent='+'+ganPct+'% más';
+  document.getElementById('chart-total').textContent=fmt(total);
+  document.getElementById('final-proyeccion').textContent=fmt(total);
+  drawChart(monto,anos,rent);
+  // Save
+  const sess=getOrCreateSession();
+  sess.simulacion={monto,anos,rentabilidad:rent*100,total,aportado};
+  saveSession(sess);
+}
+
+function irAOpciones(){
+  const sess=getOrCreateSession();
+  sess.llegóAOpciones=true;
+  saveSession(sess);
+  goTo(5);
+}
+
+function drawChart(monto,anos,rent){
+  const svg=document.getElementById('chart-svg');
+  const W=350,H=148,pad={t:8,r:75,b:18,l:6};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const pts=anos*12+1,r=rent/12;
+  let maxVal=0;
+  const vals=[],simple=[];
+  for(let i=0;i<pts;i++){
+    const v=r>0?monto*((Math.pow(1+r,i)-1)/r):monto*i;
+    vals.push(v);simple.push(monto*i);
+    if(v>maxVal)maxVal=v;
+  }
+  if(maxVal===0)maxVal=1;
+  const x=i=>pad.l+(i/(pts-1))*cw;
+  const y=v=>pad.t+ch-(v/maxVal)*ch;
+  const tp=arr=>arr.map((v,i)=>(i===0?'M':'L')+x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  const fp=tp(vals)+' L'+x(pts-1).toFixed(1)+','+(pad.t+ch)+' L'+x(0).toFixed(1)+','+(pad.t+ch)+' Z';
+  svg.innerHTML='<defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DCAA5" stop-opacity="0.4"/><stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.05"/></linearGradient></defs>'+
+    '<path d="'+fp+'" fill="url(#gf)"/>'+
+    '<path d="'+tp(simple)+'" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5,4"/>'+
+    '<path d="'+tp(vals)+'" fill="none" stroke="#5DCAA5" stroke-width="2.5"/>';
+}
+
+// ─── ADMIN PANEL ─────────────────────────────────────────
+function renderAdmin(){
+  loadSessions();
+  const total=sessions.length;
+  const conDiag=sessions.filter(s=>s.diagnostico).length;
+  const conSim=sessions.filter(s=>s.simulacion).length;
+  const conCTA=sessions.filter(s=>s.ctaElegido).length;
+  const ctaCounts={};
+  sessions.forEach(s=>{if(s.ctaElegido)ctaCounts[s.ctaElegido]=(ctaCounts[s.ctaElegido]||0)+1;});
+  const topCTA=Object.entries(ctaCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('admin-stats').innerHTML=
+    statCard('👥','Usuarios registrados',total,'var(--green-l)','var(--green-d)')+
+    statCard('🔬','Completaron diagnóstico',conDiag,'var(--amber-l)','#854F0B')+
+    statCard('📈','Usaron simulador',conSim,'#E6F1FB','#185FA5')+
+    statCard('🎯','Eligieron una opción',conCTA,'var(--danger-l)','var(--danger)')+
+    (topCTA?statCard('🏆','CTA más elegida',topCTA[0].replace(/_/g,' '),'#EEEDFE','#3C3489'):'');
+
+  const usersHTML=sessions.length===0
+    ? '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">No hay usuarios registrados aún.</div>'
+    : sessions.map((s,i)=>`
+      <div class="admin-card">
+        <div class="admin-header">
+          <span>${s.nombre||'Sin nombre'}</span>
+          <small>${s.registradoEn||''}</small>
+        </div>
+        <div class="admin-row"><span class="admin-label">Email</span><span class="admin-val">${s.email||'-'}</span></div>
+        <div class="admin-row"><span class="admin-label">Edad</span><span class="admin-val">${s.edad||'-'} años</span></div>
+        ${s.diagnostico?`
+        <div class="admin-row"><span class="admin-label">Ingresos</span><span class="admin-val">${fmt(s.diagnostico.ingresos)}</span></div>
+        <div class="admin-row"><span class="admin-label">Disponible p/ invertir</span><span class="admin-val" style="color:var(--green);">${fmt(s.diagnostico.disponible)}/mes</span></div>
+        <div class="admin-row"><span class="admin-label">Perfil de riesgo</span><span class="admin-val">${s.diagnostico.perfil}</span></div>
+        <div class="admin-row"><span class="admin-label">Experiencia previa</span><span class="admin-val">${s.diagnostico.experiencia}</span></div>
+        `:'<div class="admin-row"><span class="admin-label">Diagnóstico</span><span class="admin-val" style="color:var(--muted);">No completado</span></div>'}
+        ${s.simulacion?`<div class="admin-row"><span class="admin-label">Simuló</span><span class="admin-val">${fmt(s.simulacion.monto)}/mes · ${s.simulacion.anos} años</span></div>`:''}
+        <div class="admin-row"><span class="admin-label">CTA elegida</span><span class="admin-val">${s.ctaElegido?s.ctaElegido.replace(/_/g,' '):'—'}</span></div>
+        <div class="admin-row"><span class="admin-label">Pasos recorridos</span><span class="admin-val" style="font-size:11px;">${(s.steps||[]).join(' → ')}</span></div>
+        <div class="admin-row"><span class="admin-label">Última actividad</span><span class="admin-val">${s.lastSeen||'-'}</span></div>
+      </div>`).join('');
+  document.getElementById('admin-users').innerHTML=usersHTML;
+}
+
+function statCard(emoji,label,val,bg,color){
+  return `<div style="background:${bg};border-radius:var(--rs);padding:12px;"><div style="font-size:18px;margin-bottom:4px;">${emoji}</div><div style="font-size:18px;font-weight:600;color:${color};font-family:'DM Serif Display',serif;">${val}</div><div style="font-size:10px;color:${color};opacity:0.75;margin-top:2px;">${label}</div></div>`;
+}
+
+function limpiarDatos(){
+  if(confirm('¿Seguro? Se borrarán todos los registros.')){
+    localStorage.removeItem('investia_sessions');
+    sessions=[];
+    renderAdmin();
+  }
+}
+
+// ─── PANEL SECRETO (tap logo 5 veces) ────────────────────
+let tapCount=0,tapTimer=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  const logoEl=document.querySelector('.logo-bar');
+  if(logoEl){
+    logoEl.addEventListener('click',()=>{
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer=setTimeout(()=>tapCount=0,2000);
+      if(tapCount>=5){tapCount=0;loadSessions();goTo('sadmin');}
+    });
+  }
+});
+
+// ─── INIT ────────────────────────────────────────────────
+loadSessions();
+updateSim();
+// Pre-calc defaults para pantalla 3 si se omite
+(function(){
+  const ti=600000,g=470000,col=ti*0.15,disp=Math.max(0,ti-g-col);
+  diagDisponible=disp;
+  document.getElementById('diag-amount').textContent=fmt(disp);
+  document.getElementById('bd-ingresos').textContent=fmt(ti);
+  document.getElementById('bd-gastos').textContent=fmt(g);
+  document.getElementById('bd-colchon').textContent=fmt(col);
+  document.getElementById('bd-disponible').textContent=fmt(disp);
+  const pct=Math.min(100,(disp/ti)*100);
+  document.getElementById('gauge-fill').style.width=pct.toFixed(0)+'%';
+  document.getElementById('gauge-pct').textContent=pct.toFixed(0)+'% del ingreso';
+  document.getElementById('verdict-title').textContent='Tienes un buen punto de partida';
+  document.getElementById('verdict-desc').textContent=fmt(disp)+'/mes disponibles en fondos balanceados y ETFs.';
+  const r=0.07/12,n=12,perdido=disp*((Math.pow(1+r,n)-1)/r)-disp*12;
+  document.getElementById('opp-amount').textContent='-'+fmt(Math.max(0,perdido));
+  document.getElementById('final-monto').textContent=fmt(disp)+'/mes';
+  const sl=document.getElementById('sl-monto');
+  sl.value=Math.min(Math.max(disp,10000),500000);
+  updateSim();
+})();
+</script>
+</body>
+</html>
